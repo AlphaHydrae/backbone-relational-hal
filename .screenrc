@@ -1,0 +1,9 @@
+source $HOME/.screenrc
+
+screen -t vim 0
+stuff "\${PROJECT_EDITOR-\$EDITOR}\012"
+screen -t zsh 1
+screen -t grunt 2
+stuff "grunt"
+screen -t readme 3
+stuff "markdown-preview README.md"

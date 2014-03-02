@@ -22,6 +22,19 @@ var HalLink = RelationalModel.extend({
     }
 
     return href;
+  },
+
+  model: function(options) {
+    options = _.extend({}, options);
+
+    var model = options.model || (options.type ? new options.type() : new Backbone.RelationalHalResource());
+    model.url = this.href(options.href);
+
+    return model;
+  },
+
+  fetchResource: function(options) {
+    return this.model(options).fetch();
   }
 });
 
@@ -221,7 +234,7 @@ Backbone.sync = function(method, model, options) {
   }
 
   // WTF: fix for weird backbone behavior.
-  // Fore some reason, when creating a model, backbone resets empty attributes
+  // For some reason, when creating a model, backbone resets empty attributes
   // right after starting to sync with the server. Since the actual sync happens
   // later (after the HAL URL has been fetched), we need to make sure the
   // attributes are passed in the options instead.

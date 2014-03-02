@@ -11,6 +11,19 @@ var HalLink = RelationalModel.extend({
     }
 
     return href;
+  },
+
+  model: function(options) {
+    options = _.extend({}, options);
+
+    var model = options.model || (options.type ? new options.type() : new Backbone.RelationalHalResource());
+    model.url = this.href(options.href);
+
+    return model;
+  },
+
+  fetchResource: function(options) {
+    return this.model(options).fetch();
   }
 });
 

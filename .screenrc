@@ -7,3 +7,4 @@ screen -t grunt 2
 stuff "grunt"
 screen -t readme 3
 stuff "markdown-preview README.md"
+select vim

@@ -4,14 +4,9 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
     return this.hasLink('self') ? this.link('self').href() : null;
   },
 
-  link: function() {
-
+  link: function(rel) {
     var links = this.get('_links');
-    if (!links) {
-      throw new Error('Resource has no _links property.');
-    }
-
-    return links.link.apply(links, Array.prototype.slice.call(arguments));
+    return links ? links.link.apply(links, Array.prototype.slice.call(arguments)) : null;
   },
   
   hasLink: function(rel) {
@@ -32,54 +27,10 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
       return false;
     }
 
-    return this.link('self').get('href') == other.link('self').get('href');
+    return this.link('self').href() == other.link('self').href();
   },
 
   isNew: function() {
     return !this.hasLink('self');
   }
 });
-
-var relationalHalResourceExtend = HalResource.extend;
-
-HalResource.extend = function(options) {
-
-  options = _.defaults({}, options, {
-    relations: [],
-    halLinks: [],
-    halEmbedded: []
-  });
-
-  var links = HalResourceLinks.extend({
-
-    relations: _.map(options.halLinks, function(halLink) {
-      return _.defaults({}, _.isObject(halLink) ? halLink : { key: halLink }, {
-        type: Backbone.HasOne,
-        relatedModel: HalLink
-      });
-    })
-  });
-
-  var embedded = HalModelEmbedded.extend({
-
-    relations: _.map(options.halEmbedded, function(halEmbedded) {
-      return _.clone(halEmbedded);
-    })
-  });
-
-  options.relations.push({
-    type: Backbone.HasOne,
-    key: '_links',
-    relatedModel: links,
-    includeInJSON: false
-  });
-
-  options.relations.push({
-    type: Backbone.HasOne,
-    key: '_embedded',
-    relatedModel: embedded,
-    includeInJSON: false
-  });
-
-  return relationalHalResourceExtend.call(HalResource, options);
-};

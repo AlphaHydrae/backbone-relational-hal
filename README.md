@@ -11,7 +11,9 @@
 
 * [Underscore](http://underscorejs.org) v1.6.0
 * [jQuery](http://jquery.com) v2.1.0
-* [Backbone](http://backbonejs.org) v1.1.2
+* [uri-templates](https://github.com/geraintluff/uri-templates) v0.1.2
+* [Backbone.js](http://backbonejs.org) v1.1.2
+* [Backbone-relational.js](http://backbonerelational.org) v0.8.7
 
 ### Download
 

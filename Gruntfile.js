@@ -33,6 +33,7 @@ module.exports = function(grunt) {
           'src/hal-links.js',
           'src/hal-embedded.js',
           'src/hal-resource.js',
+          'src/hal-resource-extend.js',
           'src/backbone-sync.js',
           'res/footer.js'
         ],
@@ -46,7 +47,13 @@ module.exports = function(grunt) {
           'backbone-relational-hal.js'
         ],
         options: {
-          vendor: [ 'vendor/underscore.js', 'vendor/jquery.js', 'vendor/backbone.js', 'vendor/backbone-relational.js' ],
+          vendor: [
+            'vendor/underscore.js',
+            'vendor/jquery.js',
+            'vendor/uri-templates.js',
+            'vendor/backbone.js',
+            'vendor/backbone-relational.js'
+          ],
           helpers: 'spec/helpers/*.js',
           specs: 'spec/**/*.spec.js'
         }

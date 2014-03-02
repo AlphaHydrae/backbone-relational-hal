@@ -4,20 +4,24 @@
  * Distributed under MIT license
  * https://github.com/AlphaHydrae/backbone-relational-hal
  */
-(function(Backbone, _) {
+(function(Backbone, _, UriTemplate, $) {
 
 var Collection = Backbone.Collection,
     RelationalModel = Backbone.RelationalModel;
 
 var HalLink = RelationalModel.extend({
 
-  href: function() {
-    return this.get('href');
-  },
+  href: function(options) {
+    options = _.extend({}, options);
 
-  tag: function(contents, options) {
-    options = options || {};
-    return $('<a />').attr('href', this.get('href'))[options.html ? 'html' : 'text'](contents);
+    var href = this.get('href');
+
+    if (this.get('templated')) {
+      href = new UriTemplate(href);
+      href = href.fillFromObject(options.template || {});
+    }
+
+    return href;
   }
 });
 
@@ -27,30 +31,24 @@ var HalLinkCollection = Collection.extend({
 
 var HalResourceLinks = RelationalModel.extend({
 
+  parse: function(response) {
+    return _.reduce(response, function(memo, data, name) {
+      memo[name] = _.isArray(data) ? new HalLinkCollection(data) : new HalLink(data);
+      return memo;
+    }, {});
+  },
+
   link: function(rel, options) {
     options = _.extend({}, options);
 
-    if (options.required && !this.has(rel)) {
-      throw new Error('No link found with relation ' + rel);
+    var data = this.get(rel);
+    if (!data) {
+      return options.all ? new HalLinkCollection() : null;
+    } else if (data instanceof HalLinkCollection) {
+      return options.all ? data : data.at(0);
+    } else {
+      return options.all ? new HalLinkCollection([ data ]) : data;
     }
-
-    var links = this.get(rel);
-    if (typeof(links.length) == 'undefined') {
-      return links;
-    }
-
-    var type = options.type;
-    var matching = links.filter(function(link) {
-      return link.has('type') && link.get('type') == type;
-    });
-
-    if (!matching.length) {
-      throw new Error('No link found with relation ' + rel + ' and type ' + type);
-    } else if (matching.length >= 2) {
-      throw new Error('Multiple links found with relation ' + rel + ' and type ' + type);
-    }
-
-    return _.first(matching);
   }
 });
 
@@ -67,14 +65,9 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
     return this.hasLink('self') ? this.link('self').href() : null;
   },
 
-  link: function() {
-
+  link: function(rel) {
     var links = this.get('_links');
-    if (!links) {
-      throw new Error('Resource has no _links property.');
-    }
-
-    return links.link.apply(links, Array.prototype.slice.call(arguments));
+    return links ? links.link.apply(links, Array.prototype.slice.call(arguments)) : null;
   },
   
   hasLink: function(rel) {
@@ -95,7 +88,7 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
       return false;
     }
 
-    return this.link('self').get('href') == other.link('self').get('href');
+    return this.link('self').href() == other.link('self').href();
   },
 
   isNew: function() {
@@ -109,18 +102,7 @@ HalResource.extend = function(options) {
 
   options = _.defaults({}, options, {
     relations: [],
-    halLinks: [],
     halEmbedded: []
-  });
-
-  var links = HalResourceLinks.extend({
-
-    relations: _.map(options.halLinks, function(halLink) {
-      return _.defaults({}, _.isObject(halLink) ? halLink : { key: halLink }, {
-        type: Backbone.HasOne,
-        relatedModel: HalLink
-      });
-    })
   });
 
   var embedded = HalModelEmbedded.extend({
@@ -133,8 +115,9 @@ HalResource.extend = function(options) {
   options.relations.push({
     type: Backbone.HasOne,
     key: '_links',
-    relatedModel: links,
-    includeInJSON: false
+    relatedModel: HalResourceLinks,
+    includeInJSON: false,
+    parse: true
   });
 
   options.relations.push({
@@ -258,4 +241,4 @@ Backbone.sync = function(method, model, options) {
   return deferred;
 };
 
-})(Backbone, _);
+})(Backbone, _, UriTemplate, $);

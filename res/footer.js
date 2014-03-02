@@ -1,1 +1,1 @@
-})(Backbone, _);
+})(Backbone, _, UriTemplate, $);

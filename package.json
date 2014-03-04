@@ -1,6 +1,6 @@
 {
   "name": "backbone-relational-hal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Use HAL+JSON with Backbone.js and Backbone-relational.js.",
   "keywords": [
     "hal",

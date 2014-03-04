@@ -16,14 +16,17 @@ var HalLink = RelationalModel.extend({
   model: function(options) {
     options = _.extend({}, options);
 
-    var model = options.model || (options.type ? new options.type() : new Backbone.RelationalHalResource());
-    model.url = this.href(options.href);
+    var model = options.model || (options.type ? new options.type() : new (Backbone.RelationalHalResource.extend({}))());
 
     return model;
   },
 
   fetchResource: function(options) {
-    return this.model(options).fetch();
+    options = _.extend({}, options);
+
+    var fetchOptions = _.extend({}, options.fetch, { url: this.href(options.href) });
+
+    return this.model(options).fetch(fetchOptions);
   }
 });
 

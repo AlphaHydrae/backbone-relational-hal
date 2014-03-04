@@ -27,14 +27,17 @@ var HalLink = RelationalModel.extend({
   model: function(options) {
     options = _.extend({}, options);
 
-    var model = options.model || (options.type ? new options.type() : new Backbone.RelationalHalResource());
-    model.url = this.href(options.href);
+    var model = options.model || (options.type ? new options.type() : new (Backbone.RelationalHalResource.extend({}))());
 
     return model;
   },
 
   fetchResource: function(options) {
-    return this.model(options).fetch();
+    options = _.extend({}, options);
+
+    var fetchOptions = _.extend({}, options.fetch, { url: this.href(options.href) });
+
+    return this.model(options).fetch(fetchOptions);
   }
 });
 
@@ -75,7 +78,21 @@ var HalModelEmbedded = RelationalModel.extend({
 var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
 
   url: function() {
-    return this.hasLink('self') ? this.link('self').href() : null;
+
+    if (this.hasLink('self')) {
+      return this.link('self').href();
+    } else if (this._cachedHalUrl) {
+      return this._cachedHalUrl;
+    }
+
+    var halUrl = _.result(this, 'halUrl');
+    if (halUrl) {
+      $.when(halUrl).then(_.bind(function(url) {
+        this._cachedHalUrl = url;
+      }, this));
+    }
+
+    return halUrl || null;
   },
 
   link: function(rel) {
@@ -85,6 +102,39 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
   
   hasLink: function(rel) {
     return this.has('_links') && this.get('_links').has(rel);
+  },
+
+  fetchHalUrl: function(rels) {
+    return this._fetchResource(rels.slice(), $.Deferred(), 'url', this);
+  },
+
+  fetchResource: function(rels) {
+    return this._fetchResource(rels.slice(), $.Deferred(), 'resource', this);
+  },
+
+  _fetchResource: function(rels, deferred, fetchType, resource, response, options) {
+    if (!rels.length) {
+      return deferred.resolve(resource, response, options);
+    }
+
+    var relName = rels.shift(),
+        rel = _.isObject(relName) ? relName : { name: relName },
+        link = resource.link(rel.name);
+
+    if (fetchType == 'url' && !rels.length) {
+      return deferred.resolve(link.href(_.omit(rel, 'name')), resource, response, options);
+    }
+
+    link.fetchResource({
+      model: rel.model || (rel.name == 'self' ? this : null),
+      type: rel.type,
+      fetch: {
+        error: _.bind(deferred.reject, deferred),
+        success: _.bind(this._fetchResource, this, rels, deferred, fetchType)
+      }
+    });
+
+    return deferred;
   },
 
   embedded: function(rel) {
@@ -143,95 +193,13 @@ HalResource.extend = function(options) {
   return relationalHalResourceExtend.call(HalResource, options);
 };
 
-Backbone.fetchHalHref = function(refs, source, deferred) {
-
-  deferred = deferred || $.Deferred();
-
-  var url;
-  if (source) {
-
-    if (!_.isObject(source._links)) {
-      throw new Error('Expected source to have a links in the _links property, got ' + JSON.stringify(source));
-    }
-
-    var ref = refs.shift();
-
-    var link = source._links[ref.rel];
-    if (!link) {
-      throw new Error('Expected source links to have a ' + ref.rel + ' link, got ' + _.keys(source._links).join(', '));
-    } else if (!link.href) {
-      throw new Error('Expected source link ' + ref.rel + ' to have an href property, got ' + JSON.stringify(link));
-    } else if (ref.template && !link.templated) {
-      throw new Error('Template parameters were given for link ' + ref.rel + ' but it is not templated, got ' + JSON.stringify(link));
-    }
-
-    url = link.href;
-    if (ref.template) {
-      url = new UriTemplate(url);
-      url = url.fillFromObject(ref.template);
-    }
-  } else {
-    url = ApiPath.build();
-  }
-
-  if (!refs.length) {
-    App.debug('HAL link is ' + url);
-    deferred.resolve(url);
-    return deferred;
-  }
-
-  App.debug('Fetching HAL link ' + refs[0].rel + ' from ' + url);
-
-  $.ajax({
-    url: url,
-    type: 'GET',
-    dataType: 'json'
-  }).done(function(response) {
-    Backbone.fetchHalHref(refs, response, deferred);
-  }).fail(function() {
-    deferred.reject('Could not GET ' + url);
-  });
-
-  return deferred;
-};
-
 Backbone.originalSync = Backbone.sync;
+
 Backbone.sync = function(method, model, options) {
   options = _.clone(options) || {};
 
-  var url = null;
-
-  try {
-    url = options.url || _.result(model, 'url');
-  } catch (e) {
-    // nothing to do
-  }
-
-  var cachedUrl = _.result(model, 'halCachedUrl');
-  if (!cachedUrl && !model.halUrl) {
-    cachedUrl = _.result(model.collection, 'halCachedUrl');
-  }
-
-  if (!url && cachedUrl) {
-    url = cachedUrl;
-    options.url = cachedUrl;
-  }
-
-  if (url) {
-    return Backbone.originalSync.apply(Backbone, Array.prototype.slice.call(arguments));
-  }
-
-  var halUrl = _.result(model, 'halUrl'),
-      halUrlSource = model;
-
-  if (!halUrl) {
-    halUrl = _.result(model.collection, 'halUrl');
-    halUrlSource = model.collection;
-  }
-
-  if (!halUrl) {
-    throw new Error('Model/collection must have url or halUrl.');
-  }
+  var deferred = $.Deferred(),
+      failureHandler = _.bind(deferred.reject, deferred);
 
   // WTF: fix for weird backbone behavior.
   // For some reason, when creating a model, backbone resets empty attributes
@@ -242,13 +210,10 @@ Backbone.sync = function(method, model, options) {
     options.attrs = model.toJSON(options);
   }
 
-  var args = Array.prototype.slice.call(arguments),
-      deferred = $.Deferred();
-
-  Backbone.fetchHalHref(halUrl.slice()).fail(_.bind(deferred.reject, deferred)).done(function(url) {
-    options.url = url;
-    halUrlSource.halCachedUrl = url;
-    Backbone.originalSync.apply(Backbone, args).done(_.bind(deferred.resolve, deferred)).fail(_.bind(deferred.reject, deferred));
+  var url = options.url || _.result(model, 'url');
+  $.when(url).fail(failureHandler).done(function(actualUrl) {
+    options.url = actualUrl;
+    Backbone.originalSync.call(Backbone, method, model, options).fail(failureHandler).done(_.bind(deferred.resolve, deferred));
   });
 
   return deferred;

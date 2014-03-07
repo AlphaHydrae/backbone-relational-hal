@@ -24,6 +24,11 @@ var HalLink = RelationalModel.extend({
     return href;
   },
 
+  tag: function(contents, options) {
+    options = options || {};
+    return $('<a />').attr('href', this.href(options.href))[options.html ? 'html' : 'text'](contents);
+  },
+
   model: function(options) {
     options = _.extend({}, options);
 
@@ -70,12 +75,40 @@ var HalResourceLinks = RelationalModel.extend({
 
 var HalModelEmbedded = RelationalModel.extend({
 
+  toJSON: function() {
+    return _.omit(RelationalModel.prototype.toJSON.apply(this, arguments), 'id');
+  },
+
   embedded: function(rel) {
-    return this.get(rel);
+    return this.get(rel) || null;
   }
 });
 
+var n = 1;
+
 var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
+
+  initialize: function() {
+
+    this.halEmbeddedId = n++;
+
+    if (this.has('_embedded') && !this.get('_embedded').id) {
+      this.get('_embedded').set({ id: this.halEmbeddedId }, { silent: true });
+    }
+
+    this.initializeResource.apply(this, arguments);
+  },
+
+  initializeResource: function() {},
+
+  parse: function(response) {
+
+    if (response._embedded) {
+      response._embedded.id = this.halEmbeddedId;
+    }
+
+    return response;
+  },
 
   url: function() {
 
@@ -168,7 +201,21 @@ HalResource.extend = function(options) {
     halEmbedded: []
   });
 
-  var embedded = HalModelEmbedded.extend({
+  var embeddedRelations;
+  if (_.isArray(options.halEmbedded)) {
+    embeddedRelations = _.map(options.halEmbedded, function(rel) {
+      return _.clone(rel);
+    });
+  } else if (_.isObject(options.halEmbedded)) {
+    embeddedRelations = _.reduce(options.halEmbedded, function(memo, rel, key) {
+      memo.push(_.extend({}, rel, { key: key }));
+      return memo;
+    }, []);
+  } else if (typeof(options.halEmbedded) != 'undefined') {
+    throw new Error('halEmbedded must be an array or object');
+  }
+
+  var EmbeddedModel = HalModelEmbedded.extend({
 
     relations: _.map(options.halEmbedded, function(halEmbedded) {
       return _.clone(halEmbedded);
@@ -186,7 +233,7 @@ HalResource.extend = function(options) {
   options.relations.push({
     type: Backbone.HasOne,
     key: '_embedded',
-    relatedModel: embedded,
+    relatedModel: EmbeddedModel,
     includeInJSON: false
   });
 

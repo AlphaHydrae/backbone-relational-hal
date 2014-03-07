@@ -1,4 +1,4 @@
-describe("HalRelationalResource", function() {
+describe("HAL links", function() {
 
   var TestResource = undefined,
       res = undefined,
@@ -39,8 +39,12 @@ describe("HalRelationalResource", function() {
 
   describe("#hasLink", function() {
 
-    it("should find a simple link", function() {
+    it("should find a link", function() {
       expect(res.hasLink('self')).toBe(true);
+    });
+
+    it("should find a collection of links", function() {
+      expect(res.hasLink('alternate')).toBe(true);
     });
 
     it("should not find an unknown link", function() {
@@ -50,7 +54,7 @@ describe("HalRelationalResource", function() {
 
   describe("#link", function() {
 
-    it("should find a simple link", function() {
+    it("should find a link", function() {
       expect(res.link('self')).not.toBe(null);
     });
 

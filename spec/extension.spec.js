@@ -1,6 +1,6 @@
-describe("Backbone.HalRelationalResource", function() {
+describe("Backbone", function() {
 
-  it("should be set", function() {
+  it("should provide RelationalHalResource", function() {
     expect(Backbone.RelationalHalResource).not.toBe(null);
   });
 });

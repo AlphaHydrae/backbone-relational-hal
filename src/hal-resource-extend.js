@@ -7,7 +7,21 @@ HalResource.extend = function(options) {
     halEmbedded: []
   });
 
-  var embedded = HalModelEmbedded.extend({
+  var embeddedRelations;
+  if (_.isArray(options.halEmbedded)) {
+    embeddedRelations = _.map(options.halEmbedded, function(rel) {
+      return _.clone(rel);
+    });
+  } else if (_.isObject(options.halEmbedded)) {
+    embeddedRelations = _.reduce(options.halEmbedded, function(memo, rel, key) {
+      memo.push(_.extend({}, rel, { key: key }));
+      return memo;
+    }, []);
+  } else if (typeof(options.halEmbedded) != 'undefined') {
+    throw new Error('halEmbedded must be an array or object');
+  }
+
+  var EmbeddedModel = HalModelEmbedded.extend({
 
     relations: _.map(options.halEmbedded, function(halEmbedded) {
       return _.clone(halEmbedded);
@@ -25,9 +39,8 @@ HalResource.extend = function(options) {
   options.relations.push({
     type: Backbone.HasOne,
     key: '_embedded',
-    relatedModel: embedded,
-    includeInJSON: false,
-    parse: true
+    relatedModel: EmbeddedModel,
+    includeInJSON: false
   });
 
   return relationalHalResourceExtend.call(HalResource, options);

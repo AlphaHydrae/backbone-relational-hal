@@ -5,6 +5,6 @@ var HalModelEmbedded = RelationalModel.extend({
   },
 
   embedded: function(rel) {
-    return this.get(rel);
+    return this.get(rel) || null;
   }
 });

@@ -1,4 +1,28 @@
+var n = 1;
+
 var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
+
+  initialize: function() {
+
+    this.halEmbeddedId = n++;
+
+    if (this.has('_embedded') && !this.get('_embedded').id) {
+      this.get('_embedded').set({ id: this.halEmbeddedId }, { silent: true });
+    }
+
+    this.initializeResource.apply(this, arguments);
+  },
+
+  initializeResource: function() {},
+
+  parse: function(response) {
+
+    if (response._embedded) {
+      response._embedded.id = this.halEmbeddedId;
+    }
+
+    return response;
+  },
 
   url: function() {
 

@@ -26,7 +26,8 @@ HalResource.extend = function(options) {
     type: Backbone.HasOne,
     key: '_embedded',
     relatedModel: embedded,
-    includeInJSON: false
+    includeInJSON: false,
+    parse: true
   });
 
   return relationalHalResourceExtend.call(HalResource, options);

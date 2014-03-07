@@ -13,6 +13,11 @@ var HalLink = RelationalModel.extend({
     return href;
   },
 
+  tag: function(contents, options) {
+    options = options || {};
+    return $('<a />').attr('href', this.href(options.href))[options.html ? 'html' : 'text'](contents);
+  },
+
   model: function(options) {
     options = _.extend({}, options);
 

@@ -2,13 +2,15 @@ var n = 1;
 
 var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
 
-  initialize: function() {
+  initialize: function(attrs, options) {
 
     this.halEmbeddedId = n++;
 
     if (this.has('_embedded') && !this.get('_embedded').id) {
       this.get('_embedded').set({ id: this.halEmbeddedId }, { silent: true });
     }
+
+    _.extend(this, _.pick(options || {}, 'halUrlTemplate'));
 
     this.initializeResource.apply(this, arguments);
   },
@@ -27,7 +29,13 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
   url: function() {
 
     if (this.hasLink('self')) {
-      return this.link('self').href();
+
+      var options = {};
+      if (this.halUrlTemplate) {
+        options.template = _.result(this, 'halUrlTemplate');
+      }
+
+      return this.link('self').href(options);
     } else if (this._cachedHalUrl) {
       return this._cachedHalUrl;
     }

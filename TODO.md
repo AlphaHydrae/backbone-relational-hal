@@ -1,2 +1,3 @@
 - make deferred and error/success callbacks behave the same way as in backbone when using fetchHalResource & fetchHalUrl
 - update package.json description
+- fetch: don't load self multiple times

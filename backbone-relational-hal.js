@@ -1,5 +1,5 @@
 /*!
- * backbone-relational-hal v0.1.1
+ * backbone-relational-hal v0.1.2
  * Copyright (c) 2014 Simon Oulevay
  * Distributed under MIT license
  * https://github.com/AlphaHydrae/backbone-relational-hal
@@ -88,13 +88,15 @@ var n = 1;
 
 var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
 
-  initialize: function() {
+  initialize: function(attrs, options) {
 
     this.halEmbeddedId = n++;
 
     if (this.has('_embedded') && !this.get('_embedded').id) {
       this.get('_embedded').set({ id: this.halEmbeddedId }, { silent: true });
     }
+
+    _.extend(this, _.pick(options || {}, 'halUrlTemplate'));
 
     this.initializeResource.apply(this, arguments);
   },
@@ -113,7 +115,13 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
   url: function() {
 
     if (this.hasLink('self')) {
-      return this.link('self').href();
+
+      var options = {};
+      if (this.halUrlTemplate) {
+        options.template = _.result(this, 'halUrlTemplate');
+      }
+
+      return this.link('self').href(options);
     } else if (this._cachedHalUrl) {
       return this._cachedHalUrl;
     }
@@ -194,11 +202,10 @@ var HalResource = Backbone.RelationalHalResource = RelationalModel.extend({
 
 var relationalHalResourceExtend = HalResource.extend;
 
-HalResource.extend = function(options) {
+var customExtend = function(options) {
 
   options = _.defaults({}, options, {
-    relations: [],
-    halEmbedded: []
+    relations: []
   });
 
   var embeddedRelations;
@@ -213,13 +220,16 @@ HalResource.extend = function(options) {
     }, []);
   } else if (typeof(options.halEmbedded) != 'undefined') {
     throw new Error('halEmbedded must be an array or object');
+  } else {
+
+    var previousEmbedded = _.findWhere(this.prototype.relations, { key: '_embedded' });
+    if (previousEmbedded && previousEmbedded.relatedModel) {
+      embeddedRelations = (previousEmbedded.relatedModel.prototype.relations || []).slice();
+    }
   }
 
   var EmbeddedModel = HalModelEmbedded.extend({
-
-    relations: _.map(options.halEmbedded, function(halEmbedded) {
-      return _.clone(halEmbedded);
-    })
+    relations: embeddedRelations
   });
 
   options.relations.push({
@@ -237,8 +247,13 @@ HalResource.extend = function(options) {
     includeInJSON: false
   });
 
-  return relationalHalResourceExtend.call(HalResource, options);
+  var res = relationalHalResourceExtend.call(this, options);
+  res.extend = customExtend;
+
+  return res;
 };
+
+HalResource.extend = customExtend;
 
 Backbone.originalSync = Backbone.sync;
 

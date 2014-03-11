@@ -1,0 +1,1 @@
+- make deferred and error/success callbacks behave the same way as in backbone when using fetchHalResource & fetchHalUrl

@@ -1,10 +1,9 @@
 var relationalHalResourceExtend = HalResource.extend;
 
-HalResource.extend = function(options) {
+var customExtend = function(options) {
 
   options = _.defaults({}, options, {
-    relations: [],
-    halEmbedded: []
+    relations: []
   });
 
   var embeddedRelations;
@@ -19,13 +18,16 @@ HalResource.extend = function(options) {
     }, []);
   } else if (typeof(options.halEmbedded) != 'undefined') {
     throw new Error('halEmbedded must be an array or object');
+  } else {
+
+    var previousEmbedded = _.findWhere(this.prototype.relations, { key: '_embedded' });
+    if (previousEmbedded && previousEmbedded.relatedModel) {
+      embeddedRelations = (previousEmbedded.relatedModel.prototype.relations || []).slice();
+    }
   }
 
   var EmbeddedModel = HalModelEmbedded.extend({
-
-    relations: _.map(options.halEmbedded, function(halEmbedded) {
-      return _.clone(halEmbedded);
-    })
+    relations: embeddedRelations
   });
 
   options.relations.push({
@@ -43,5 +45,10 @@ HalResource.extend = function(options) {
     includeInJSON: false
   });
 
-  return relationalHalResourceExtend.call(HalResource, options);
+  var res = relationalHalResourceExtend.call(this, options);
+  res.extend = customExtend;
+
+  return res;
 };
+
+HalResource.extend = customExtend;

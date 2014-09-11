@@ -41,6 +41,18 @@ module.exports = function(grunt) {
       }
     },
 
+    copy: {
+      vendor: {
+        files: [
+          { nonull: true, src: 'bower_components/underscore/underscore.js', dest: 'vendor/underscore.js' },
+          { nonull: true, src: 'bower_components/jquery/dist/jquery.js', dest: 'vendor/jquery.js' },
+          { nonull: true, src: 'bower_components/uri-templates/uri-templates.js', dest: 'vendor/uri-templates.js' },
+          { nonull: true, src: 'bower_components/backbone/backbone.js', dest: 'vendor/backbone.js' },
+          { nonull: true, src: 'bower_components/backbone-relational/backbone-relational.js', dest: 'vendor/backbone-relational.js' }
+        ]
+      }
+    },
+
     jasmine: {
       standard: {
         src: [
@@ -72,10 +84,12 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks('grunt-bump');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
 
   grunt.registerTask('default', [ 'jshint', 'concat', 'jasmine', 'uglify' ]);
+  grunt.registerTask('vendor', [ 'copy:vendor' ]);
 };

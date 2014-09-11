@@ -1,0 +1,31 @@
+{
+  "name": "backbone-relational-hal",
+  "main": "backbone-relational-hal.js",
+  "version": "0.1.3",
+  "homepage": "https://github.com/AlphaHydrae/backbone-relational-hal",
+  "description": "Use HAL+JSON with Backbone.js and Backbone-relational.js.",
+  "keywords": [
+    "hal",
+    "hal+json",
+    "backbone",
+    "backbone-relational"
+  ],
+  "authors": [
+    "Simon Oulevay"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "res",
+    "spec",
+    "src",
+    "vendor"
+  ],
+  "dependencies": {
+    "backbone-relational": "~0.8.8",
+    "uri-templates": "~0.1.5",
+    "jquery": "~2.1.1"
+  }
+}

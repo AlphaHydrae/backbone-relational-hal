@@ -7,15 +7,21 @@
 
 ## Requirements
 
-**backbone-relational-hal** is currently working with the following libraries:
+**backbone-relational-hal** is currently tested with the following libraries:
 
-* [Underscore](http://underscorejs.org) v1.6.0
-* [jQuery](http://jquery.com) v2.1.0
-* [uri-templates](https://github.com/geraintluff/uri-templates) v0.1.2
+* [Underscore](http://underscorejs.org) v1.7.0
+* [jQuery](http://jquery.com) v2.1.1
+* [uri-templates](https://github.com/geraintluff/uri-templates) v0.1.5
 * [Backbone.js](http://backbonejs.org) v1.1.2
-* [Backbone-relational.js](http://backbonerelational.org) v0.8.7
+* [Backbone-relational.js](http://backbonerelational.org) v0.8.8
 
 ## Installation
+
+With bower:
+
+    bower install --save backbone-relational-hal
+
+Builds:
 
 * Development: [backbone-relational-hal.js](https://raw.github.com/AlphaHydrae/backbone-relational-hal/master/backbone-relational-hal.js)
 * Production: [backbone-relational-hal.min.js](https://raw.github.com/AlphaHydrae/backbone-relational-hal/master/backbone-relational-hal.min.js)

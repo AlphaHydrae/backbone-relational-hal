@@ -1,5 +1,5 @@
 /*!
- * backbone-relational-hal v0.1.2
+ * backbone-relational-hal v0.1.3
  * Copyright (c) 2014 Simon Oulevay
  * Distributed under MIT license
  * https://github.com/AlphaHydrae/backbone-relational-hal

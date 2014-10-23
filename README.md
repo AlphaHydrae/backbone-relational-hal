@@ -39,12 +39,12 @@ var Person = Backbone.RelationalHalResource.extend({
 **HAL Links**
 
 * [Hyperlinks](#hyperlinks)
-* [URI templates](#uritemplates)
-* [Generating &lt;a&gt; tags from links](#generatingltagttagsfromlinks)
+* [URI templates](#uri-templates)
+* [Generating &lt;a&gt; tags from links](#generating-a-tags-from-links)
 
 **HAL Embedded Resources**
 
-* [Embedding resources](#embeddingresources)
+* [Embedding resources](#embedding-resources)
 
 ### Hyperlinks
 
